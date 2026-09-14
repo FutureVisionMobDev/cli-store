@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JKSTORE Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0b1220;
+      --bg1: #121a2b;
+      --panel: #162033;
+      --line: #2a3a55;
+      --text: #e8eef8;
+      --muted: #8b9bb8;
+      --cyan: #3de0c5;
+      --cyan-dim: #1fa894;
+      --amber: #f0b429;
+      --danger: #ff6b7a;
+      --ok: #5ddea0;
+      --font: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(61, 224, 197, 0.12), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(240, 180, 41, 0.08), transparent 50%),
+        linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #0e1626);
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 48px 20px 80px; }
+    .ascii {
+      font-family: var(--mono);
+      font-size: clamp(0.55rem, 1.6vw, 0.85rem);
+      line-height: 1.15;
+      color: var(--cyan);
+      white-space: pre;
+      margin: 0 0 8px;
+      text-shadow: 0 0 24px rgba(61, 224, 197, 0.25);
+    }
+    .tag {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      margin-bottom: 36px;
+    }
+    .tag a { color: var(--cyan); text-decoration: none; }
+    .card {
+      background: rgba(22, 32, 51, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    }
+    .card h2 { margin: 0 0 6px; font-size: 1.05rem; }
+    .card p.sub { margin: 0 0 16px; color: var(--muted); font-size: 0.92rem; }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-family: var(--mono);
+    }
+    input, select {
+      width: 100%;
+      background: #0d1524;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 11px 12px;
+      font: 500 0.95rem var(--font);
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 0 3px rgba(61, 224, 197, 0.15);
+    }
+    .row { display: grid; gap: 12px; margin-bottom: 12px; }
+    @media (min-width: 560px) {
+      .row.cols-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font: 600 0.95rem var(--font);
+      cursor: pointer;
+      background: var(--cyan);
+      color: #04201b;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { background: #63ecd5; }
+    .btn-danger { background: transparent; color: var(--danger); border: none; font-size: 0.85rem; padding: 4px 0; cursor: pointer; }
+    .drop {
+      border: 1.5px dashed #3a4f73;
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      background: #0d1524;
+      margin: 8px 0 14px;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .drop.hot, .drop.has-file {
+      border-color: var(--cyan);
+      background: rgba(61, 224, 197, 0.08);
+      color: var(--cyan);
+    }
+    .drop .fname {
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text);
+      word-break: break-all;
+    }
+    .hint {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--amber);
+      margin: 0 0 12px;
+    }
+    .status { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+    .app-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: #101a2c;
+      margin-bottom: 12px;
+    }
+    .app-card h3 { margin: 0; font-size: 1.05rem; }
+    .app-card .slug { font-family: var(--mono); font-size: 0.8rem; color: var(--cyan); margin-left: 6px; }
+    .app-card .desc { color: var(--muted); font-size: 0.9rem; margin: 6px 0 12px; }
+    .ver {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-top: 1px solid #1e2c44;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #1a2b44;
+      color: var(--amber);
+      margin-right: 8px;
+    }
+    .empty { color: var(--muted); font-family: var(--mono); font-size: 0.9rem; }
+    .cli {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      background: #0a1220;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #b8f5e8;
+      overflow-x: auto;
+      margin: 8px 0 0;
+    }
+    .progress-wrap { margin: 0 0 14px; }
+    .progress-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #0d1524;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1fa894, var(--cyan));
+      transition: width 0.15s ease;
+    }
+    .progress-label {
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .mode-btn {
+      background: #0d1524;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font: 600 0.85rem var(--font);
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: rgba(61, 224, 197, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <pre class="ascii">       _ _  ______ _____ ___  ____  _____ 
+     | | |/ / ___|_   _/ _ \|  _ \| ____|
+  _  | | ' /\___ \ | || | | | |_) |  _|  
+ | |_| | . \ ___) || || |_| |  _ <| |___ 
+  \___/|_|\_\____/ |_| \___/|_| \_\_____|</pre>
+    <div class="tag">admin · upload to this server <b>or</b> link a GitHub/release URL · <a href="/">public page</a></div>
+
+    <section class="card">
+      <h2>Publish app</h2>
+      <p class="sub">Self-host a file on JKSTORE, or point at an external installer (GitHub Releases, CDN, etc.). Zip packages auto-extract + launch the main exe/app (optional path in Silent args).</p>
+
+      <div class="mode-row" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button type="button" class="mode-btn active" id="modeUpload" data-mode="upload">Upload to server</button>
+        <button type="button" class="mode-btn" id="modeRemote" data-mode="remote">External link</button>
+      </div>
+
+      <p class="hint" id="fileHint">▸ Drop or choose an installer before publishing</p>
+      <div class="row cols-2">
+        <div>
+          <label for="pubSlug">Slug</label>
+          <input id="pubSlug" placeholder="slack" list="slugList" autocomplete="off" />
+          <datalist id="slugList"></datalist>
+        </div>
+        <div>
+          <label for="pubName">Display name</label>
+          <input id="pubName" placeholder="Slack" />
+        </div>
+        <div>
+          <label for="pubOs">OS</label>
+          <select id="pubOs">
+            <option value="win">Windows</option>
+            <option value="mac">macOS</option>
+          </select>
+        </div>
+        <div>
+          <label for="pubVersion">Version</label>
+          <input id="pubVersion" placeholder="1.0.0" />
+        </div>
+        <div>
+          <label for="pubArgs">Silent args / zip launch path</label>
+          <input id="pubArgs" placeholder="/S  or  App/Foo.exe (zip)" />
+        </div>
+        <div>
+          <label for="pubDesc">Description</label>
+          <input id="pubDesc" placeholder="Team chat" />
+        </div>
+      </div>
+
+      <div id="uploadFields">
+        <div id="dropZone" class="drop">
+          Drop installer / zip here — or click to browse
+          <div id="fileName" class="fname"></div>
+        </div>
+        <input id="fileInput" type="file" accept=".exe,.msi,.pkg,.dmg,.zip,application/octet-stream,application/zip" hidden />
+        <div class="progress-wrap" id="progressWrap" hidden>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">0%</div>
+        </div>
+      </div>
+
+      <div id="remoteFields" hidden>
+        <div class="row">
+          <div>
+            <label for="pubUrl">Direct download URL</label>
+            <input id="pubUrl" placeholder="https://github.com/org/repo/releases/download/v1.0.0/App-Setup.exe" />
+          </div>
+        </div>
+        <div class="row cols-2">
+          <div>
+            <label for="pubSha">SHA256 (required)</label>
+            <input id="pubSha" placeholder="abcdef0123… (64 hex chars)" spellcheck="false" />
+          </div>
+          <div>
+            <label for="pubSize">Size bytes (optional)</label>
+            <input id="pubSize" placeholder="123456789" />
+          </div>
+        </div>
+        <p class="sub" style="margin-top:0">CLI still verifies SHA256 before install. Get hash from release notes, or: <code style="color:var(--cyan)">Get-FileHash file.exe -Algorithm SHA256</code></p>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <button type="button" id="publishBtn" class="btn" disabled>Publish</button>
+        <span id="uploadStatus" class="status"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Catalog</h2>
+      <p class="sub">Apps with a local upload or external link show here and in the CLI menu.</p>
+      <div id="appList"></div>
+    </section>
+
+    <section class="card">
+      <h2>CLI</h2>
+      <p class="sub">Simple one-liners (menu opens automatically):</p>
+      <div class="cli">irm https://appstore.fvcloud.online | iex</div>
+      <div class="cli">curl -fsSL https://appstore.fvcloud.online | bash</div>
+    </section>
+  </div>
+
+  <script>
+    let selectedFile = null;
+    let publishMode = "upload"; // upload | remote
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, options);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText || "request failed");
+      return data;
+    }
+
+    function formatMb(bytes) {
+      return ((Number(bytes) || 0) / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function setMode(mode) {
+      publishMode = mode;
+      document.getElementById("modeUpload").classList.toggle("active", mode === "upload");
+      document.getElementById("modeRemote").classList.toggle("active", mode === "remote");
+      document.getElementById("uploadFields").hidden = mode !== "upload";
+      document.getElementById("remoteFields").hidden = mode !== "remote";
+      syncPublishEnabled();
+    }
+
+    function syncPublishEnabled() {
+      const btn = document.getElementById("publishBtn");
+      const hint = document.getElementById("fileHint");
+      let ready = false;
+      if (publishMode === "upload") {
+        ready = !!selectedFile;
+        hint.textContent = ready
+          ? "▸ Installer ready — fill slug, name, version, then Publish"
+          : "▸ Drop or choose an installer before publishing";
+      } else {
+        const url = document.getElementById("pubUrl").value.trim();
+        const sha = document.getElementById("pubSha").value.trim();
+        ready = !!url && !!sha;
+        hint.textContent = ready
+          ? "▸ Link + SHA256 ready — fill slug, name, version, then Publish"
+          : "▸ Paste a direct download URL and SHA256 (GitHub release asset URL works)";
+      }
+      btn.disabled = !ready;
+      hint.style.color = ready ? "var(--ok)" : "var(--amber)";
+    }
+
+    function setProgress(pct, label) {
+      const wrap = document.getElementById("progressWrap");
+      const fill = document.getElementById("progressFill");
+      const text = document.getElementById("progressLabel");
+      wrap.hidden = false;
+      fill.style.width = Math.max(0, Math.min(100, pct)) + "%";
+      text.textContent = label || (Math.round(pct) + "%");
+    }
+
+    function hideProgress() {
+      document.getElementById("progressWrap").hidden = true;
+      document.getElementById("progressFill").style.width = "0%";
+    }
+
+    async function uploadChunked(file, meta) {
+      const init = await api("/admin/api/upload/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...meta,
+          filename: file.name,
+          size: file.size,
+        }),
+      });
+
+      const chunkSize = init.chunkSize;
+      const total = init.totalChunks;
+      for (let i = 0; i < total; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(file.size, start + chunkSize);
+        const blob = file.slice(start, end);
+        const fd = new FormData();
+        fd.append("uploadId", init.uploadId);
+        fd.append("index", String(i));
+        fd.append("chunk", blob, "part-" + i);
+
+        let attempt = 0;
+        while (true) {
+          attempt++;
+          try {
+            await api("/admin/api/upload/chunk", { method: "POST", body: fd });
+            break;
+          } catch (err) {
+            if (attempt >= 3) throw err;
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
+        setProgress(((i + 1) / total) * 95, "Uploading chunk " + (i + 1) + "/" + total + " (" + formatMb(end) + " / " + formatMb(file.size) + ")");
+      }
+
+      setProgress(97, "Assembling + hashing…");
+      const done = await api("/admin/api/upload/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uploadId: init.uploadId }),
+      });
+      setProgress(100, "Done");
+      return done;
+    }
+
+    async function loadApps() {
+      const apps = await api("/admin/api/apps");
+      const withFiles = apps.filter((a) => (a.versions || []).length > 0);
+      document.getElementById("slugList").innerHTML = withFiles
+        .map((a) => `<option value="${escapeHtml(a.slug)}">${escapeHtml(a.name)}</option>`)
+        .join("");
+
+      const list = document.getElementById("appList");
+      if (!withFiles.length) {
+        list.innerHTML = `<p class="empty">No published apps yet. Upload an installer above.</p>`;
+        return;
+      }
+      list.innerHTML = withFiles.map((a) => `
+        <div class="app-card">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+            <div>
+              <h3>${escapeHtml(a.name)}<span class="slug">${escapeHtml(a.slug)}</span></h3>
+              <div class="desc">${escapeHtml(a.description || "—")}</div>
+            </div>
+            <button type="button" class="btn-danger" data-delete-app="${escapeHtml(a.slug)}">delete app</button>
+          </div>
+          ${(a.versions || []).map((v) => {
+            const remote = !!(v.source_url);
+            return `
+            <div class="ver">
+              <span><span class="badge">${escapeHtml(v.os)}</span>${remote ? '<span class="badge" style="border-color:var(--amber);color:var(--amber)">remote</span>' : ''}<span class="badge">v${escapeHtml(v.version)}</span> ${formatMb(v.size)} · ${escapeHtml(remote ? (v.source_url || v.filename) : v.filename)}</span>
+              <button type="button" class="btn-danger" data-delete-version="${v.id}">remove</button>
+            </div>`;
+          }).join("")}
+        </div>
+      `).join("");
+    }
+
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+
+    function setFile(file) {
+      selectedFile = file || null;
+      fileName.textContent = selectedFile
+        ? selectedFile.name + " (" + formatMb(selectedFile.size) + ")"
+        : "";
+      dropZone.classList.toggle("has-file", !!selectedFile);
+      syncPublishEnabled();
+    }
+
+    dropZone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("hot");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("hot"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("hot");
+      setFile(e.dataTransfer.files[0]);
+    });
+
+    document.getElementById("modeUpload").addEventListener("click", () => setMode("upload"));
+    document.getElementById("modeRemote").addEventListener("click", () => setMode("remote"));
+    document.getElementById("pubUrl").addEventListener("input", syncPublishEnabled);
+    document.getElementById("pubSha").addEventListener("input", syncPublishEnabled);
+
+    document.getElementById("publishBtn").addEventListener("click", async () => {
+      const status = document.getElementById("uploadStatus");
+      const btn = document.getElementById("publishBtn");
+      try {
+        const slug = document.getElementById("pubSlug").value.trim();
+        const name = document.getElementById("pubName").value.trim();
+        const version = document.getElementById("pubVersion").value.trim();
+        if (!slug || !name || !version) throw new Error("slug, name, and version required");
+
+        btn.disabled = true;
+        status.className = "status";
+
+        if (publishMode === "remote") {
+          const url = document.getElementById("pubUrl").value.trim();
+          const sha256 = document.getElementById("pubSha").value.trim().toLowerCase();
+          if (!url || !sha256) throw new Error("url and sha256 required");
+          status.textContent = "Registering remote link…";
+          await api("/admin/api/remote", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              name,
+              description: document.getElementById("pubDesc").value,
+              os: document.getElementById("pubOs").value,
+              version,
+              args: document.getElementById("pubArgs").value,
+              url,
+              sha256,
+              size: document.getElementById("pubSize").value.trim() || 0,
+            }),
+          });
+          document.getElementById("pubUrl").value = "";
+          document.getElementById("pubSha").value = "";
+          document.getElementById("pubSize").value = "";
+        } else {
+          if (!selectedFile) throw new Error("installer file required");
+          status.textContent = "Starting upload…";
+          setProgress(1, "Preparing…");
+          await uploadChunked(selectedFile, {
+            slug,
+            name,
+            description: document.getElementById("pubDesc").value,
+            os: document.getElementById("pubOs").value,
+            version,
+            args: document.getElementById("pubArgs").value,
+          });
+          fileInput.value = "";
+          setFile(null);
+          setTimeout(hideProgress, 1200);
+        }
+
+        status.className = "status ok";
+        status.textContent = "✓ Published";
+        document.getElementById("pubVersion").value = "";
+        await loadApps();
+      } catch (err) {
+        status.className = "status err";
+        status.textContent = "✗ " + err.message;
+        hideProgress();
+      } finally {
+        syncPublishEnabled();
+      }
+    });
+
+    document.getElementById("appList").addEventListener("click", async (e) => {
+      const delApp = e.target.getAttribute("data-delete-app");
+      const delVer = e.target.getAttribute("data-delete-version");
+      try {
+        if (delApp) {
+          if (!confirm(`Delete app "${delApp}" and all installers?`)) return;
+          await api("/admin/api/apps/" + encodeURIComponent(delApp), { method: "DELETE" });
+          await loadApps();
+        }
+        if (delVer) {
+          await api("/admin/api/versions/" + encodeURIComponent(delVer), { method: "DELETE" });
+          await loadApps();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Prefill name when picking existing slug from datalist blur
+    document.getElementById("pubSlug").addEventListener("change", async () => {
+      try {
+        const apps = await api("/admin/api/apps");
+        const hit = apps.find((a) => a.slug === document.getElementById("pubSlug").value.trim().toLowerCase());
+        if (hit) {
+          if (!document.getElementById("pubName").value) document.getElementById("pubName").value = hit.name;
+          if (!document.getElementById("pubDesc").value) document.getElementById("pubDesc").value = hit.description || "";
+        }
+      } catch (_) {}
+    });
+
+    syncPublishEnabled();
+    loadApps().catch((err) => alert(err.message));
+  </script>
+</body>
+</html>

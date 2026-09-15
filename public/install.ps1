@@ -211,5 +211,13 @@ function Install {
   Write-Host ""
 }
 
-# One-liner: irm .../install.ps1 | iex
-Install
+# One-liner menu:  irm https://appstore…/install.ps1 | iex
+# Direct install:  $env:JK_APP='slug'; irm https://appstore…/install.ps1 | iex
+#              or: irm …/install.ps1 | iex; Install -App slug   (same session)
+$JkApp = $env:JK_APP
+if (-not $JkApp -and $args.Count -gt 0) { $JkApp = [string]$args[0] }
+if ($JkApp) {
+  Install -App $JkApp
+} else {
+  Install
+}

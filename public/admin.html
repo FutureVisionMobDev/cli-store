@@ -176,6 +176,40 @@
       overflow-x: auto;
       margin: 8px 0 0;
     }
+    .cli-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      margin-top: 8px;
+    }
+    .cli-row .cli {
+      flex: 1;
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 0.75rem;
+      line-height: 1.35;
+      word-break: break-all;
+    }
+    .cli-row button.copy {
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      background: #162033;
+      color: var(--cyan);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+    .cli-row button.copy:hover { border-color: var(--cyan); }
+    .cli-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 0;
+    }
     .progress-wrap { margin: 0 0 14px; }
     .progress-bar {
       height: 10px;
@@ -439,7 +473,28 @@
         list.innerHTML = `<p class="empty">No published apps yet. Upload an installer above.</p>`;
         return;
       }
-      list.innerHTML = withFiles.map((a) => `
+      list.innerHTML = withFiles.map((a) => {
+        const hasMac = (a.versions || []).some((v) => v.os === "mac");
+        const hasWin = (a.versions || []).some((v) => v.os === "win");
+        const base = location.origin;
+        const macCmd = `curl -fsSL ${base}/install.sh | bash -s -- ${a.slug}`;
+        const winCmd = `$env:JK_APP='${a.slug}'; irm ${base}/install.ps1 | iex`;
+        const cmds = [];
+        if (hasMac) {
+          cmds.push(`<div class="cli-label">Mac — direct install</div>
+            <div class="cli-row">
+              <pre class="cli">${escapeHtml(macCmd)}</pre>
+              <button type="button" class="copy" data-copy="${escapeHtml(macCmd)}">copy</button>
+            </div>`);
+        }
+        if (hasWin) {
+          cmds.push(`<div class="cli-label">Windows — direct install</div>
+            <div class="cli-row">
+              <pre class="cli">${escapeHtml(winCmd)}</pre>
+              <button type="button" class="copy" data-copy="${escapeHtml(winCmd)}">copy</button>
+            </div>`);
+        }
+        return `
         <div class="app-card">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
             <div>
@@ -456,8 +511,9 @@
               <button type="button" class="btn-danger" data-delete-version="${v.id}">remove</button>
             </div>`;
           }).join("")}
-        </div>
-      `).join("");
+          ${cmds.join("")}
+        </div>`;
+      }).join("");
     }
 
     const dropZone = document.getElementById("dropZone");
@@ -557,6 +613,19 @@
     });
 
     document.getElementById("appList").addEventListener("click", async (e) => {
+      const copyBtn = e.target.closest("button.copy");
+      if (copyBtn) {
+        const text = copyBtn.getAttribute("data-copy") || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          const prev = copyBtn.textContent;
+          copyBtn.textContent = "copied";
+          setTimeout(() => { copyBtn.textContent = prev; }, 1200);
+        } catch {
+          copyBtn.textContent = "fail";
+        }
+        return;
+      }
       const delApp = e.target.getAttribute("data-delete-app");
       const delVer = e.target.getAttribute("data-delete-version");
       try {

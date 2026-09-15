@@ -200,10 +200,24 @@ for i, slug in enumerate(slugs, 1):
   echo "  ────────────────────────────────────────"
   printf "  %-4s %s\n" "Q" "quit"
   echo
+  echo "  tip: direct install → curl -fsSL $STORE/install.sh | bash -s -- <slug>"
+  echo
+
+  # curl|bash pipes script on stdin — menu must read from real TTY or it exits immediately
+  local TTY_IN="/dev/tty"
+  if [[ ! -r "$TTY_IN" ]]; then
+    echo "  [!] no TTY (non-interactive). Pass slug:" >&2
+    echo "      curl -fsSL $STORE/install.sh | bash -s -- <slug>" >&2
+    exit 1
+  fi
 
   while true; do
     printf "  select app # (or Q): "
-    read -r choice
+    if ! read -r choice <"$TTY_IN"; then
+      echo
+      echo "  [!] input closed."
+      exit 1
+    fi
     choice="$(printf '%s' "$choice" | tr -d '[:space:]')"
     if [[ -z "$choice" ]]; then
       continue
@@ -217,6 +231,8 @@ for i, slug in enumerate(slugs, 1):
       continue
     fi
     install_app "${SLUGS[$((choice - 1))]}"
+    printf "  press Enter to close… "
+    read -r _ <"$TTY_IN" || true
     exit 0
   done
 }

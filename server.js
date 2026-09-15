@@ -86,8 +86,15 @@ function basicAuth(req, res, next) {
 }
 
 function baseUrl(req) {
-  const proto = req.protocol;
-  const host = req.get("host");
+  const fromEnv = String(process.env.PUBLIC_BASE_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  const xfProto = String(req.get("x-forwarded-proto") || "")
+    .split(",")[0]
+    .trim();
+  const proto = xfProto || req.protocol || "https";
+  const host = req.get("x-forwarded-host") || req.get("host");
   return `${proto}://${host}`;
 }
 
@@ -179,7 +186,7 @@ app.get("/apps.json", (req, res) => {
   try {
     const apps = db.prepare("SELECT id, slug, name, description FROM apps ORDER BY name").all();
     const latestStmt = db.prepare(`
-      SELECT os, arch, version, filename, sha256, args, created_at, COALESCE(source_url, '') AS source_url
+      SELECT os, arch, version, filename, sha256, args, size, created_at, COALESCE(source_url, '') AS source_url
       FROM versions
       WHERE app_id = ?
       ORDER BY datetime(created_at) DESC, id DESC
@@ -193,14 +200,26 @@ app.get("/apps.json", (req, res) => {
       for (const v of versions) {
         if (seen.has(v.os)) continue;
         seen.add(v.os);
+        let fileUrl = v.source_url
+          ? v.source_url
+          : `${origin}/files/${encodeURIComponent(v.filename)}`;
+        // Prefer https for same-host file URLs (Coolify/Traefik often report http)
+        try {
+          const u = new URL(fileUrl);
+          if (u.hostname === new URL(origin).hostname && u.protocol === "http:") {
+            u.protocol = "https:";
+            fileUrl = u.toString();
+          }
+        } catch {
+          /* keep fileUrl */
+        }
         entry[v.os] = {
           version: v.version,
           arch: v.arch || "x64",
-          url: v.source_url
-            ? v.source_url
-            : `${origin}/files/${encodeURIComponent(v.filename)}`,
+          url: fileUrl,
           sha256: v.sha256,
           args: v.args || "",
+          size: Number(v.size) || 0,
           source: v.source_url ? "remote" : "local",
         };
       }
@@ -214,7 +233,51 @@ app.get("/apps.json", (req, res) => {
   }
 });
 
-app.use("/files", express.static(uploadsDir, { fallthrough: false, index: false }));
+// Explicit file route: Content-Length + Range so big downloads can resume past Cloudflare cuts
+app.get("/files/:filename", (req, res) => {
+  const raw = path.basename(String(req.params.filename || ""));
+  if (!raw || raw !== req.params.filename) {
+    return sendError(res, 400, "invalid filename");
+  }
+  const filePath = path.join(uploadsDir, raw);
+  if (!filePath.startsWith(uploadsDir) || !fs.existsSync(filePath)) {
+    return sendError(res, 404, "file not found");
+  }
+  const stat = fs.statSync(filePath);
+  const total = stat.size;
+  res.setHeader("Accept-Ranges", "bytes");
+  res.setHeader("Cache-Control", "public, max-age=14400");
+  const range = req.headers.range;
+  if (range) {
+    const m = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!m) {
+      res.setHeader("Content-Range", `bytes */${total}`);
+      return res.status(416).end();
+    }
+    const start = m[1] ? Number(m[1]) : 0;
+    const end = m[2] ? Number(m[2]) : total - 1;
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      start < 0 ||
+      end >= total ||
+      start > end
+    ) {
+      res.setHeader("Content-Range", `bytes */${total}`);
+      return res.status(416).end();
+    }
+    const chunk = end - start + 1;
+    res.status(206);
+    res.setHeader("Content-Range", `bytes ${start}-${end}/${total}`);
+    res.setHeader("Content-Length", String(chunk));
+    res.type(path.extname(raw) || "application/octet-stream");
+    fs.createReadStream(filePath, { start, end }).pipe(res);
+    return;
+  }
+  res.setHeader("Content-Length", String(total));
+  res.type(path.extname(raw) || "application/octet-stream");
+  fs.createReadStream(filePath).pipe(res);
+});
 
 function serveInstallScript(filename) {
   return (req, res) => {

@@ -139,7 +139,74 @@ function Install {
   $dest = Join-Path $env:TEMP ("{0}-{1}{2}" -f $App, $version, $ext)
 
   Write-Host "  ↓ downloading $App $version" -ForegroundColor Cyan
-  Invoke-WebRequest -Uri $url -OutFile $dest
+  $expectedSize = 0
+  if ($win.PSObject.Properties.Name -contains "size") {
+    [void][int64]::TryParse([string]$win.size, [ref]$expectedSize)
+  }
+  $destDir = Split-Path -Parent $dest
+  if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir | Out-Null }
+  if (Test-Path $dest) { Remove-Item -Force $dest -ErrorAction SilentlyContinue }
+
+  # Progress + resume (Cloudflare often cuts large files mid-transfer)
+  $try = 0
+  while ($true) {
+    $try++
+    if ($try -gt 40) {
+      Write-Host "  ✗ download incomplete after $try tries" -ForegroundColor Red
+      exit 1
+    }
+    $existing = 0
+    if (Test-Path $dest) { $existing = (Get-Item $dest).Length }
+    try {
+      $req = [System.Net.HttpWebRequest]::Create($url)
+      $req.Method = "GET"
+      $req.AllowAutoRedirect = $true
+      $req.Timeout = 600000
+      $req.ReadWriteTimeout = 600000
+      if ($existing -gt 0) {
+        $req.AddRange($existing)
+      }
+      $resp = $req.GetResponse()
+      $total = $existing
+      if ($resp.ContentLength -ge 0) {
+        $total = $existing + $resp.ContentLength
+      } elseif ($expectedSize -gt 0) {
+        $total = $expectedSize
+      }
+      $stream = $resp.GetResponseStream()
+      $mode = if ($existing -gt 0) { [System.IO.FileMode]::Append } else { [System.IO.FileMode]::Create }
+      $fs = [System.IO.File]::Open($dest, $mode)
+      $buffer = New-Object byte[] (1024 * 256)
+      $readTotal = $existing
+      while (($n = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+        $fs.Write($buffer, 0, $n)
+        $readTotal += $n
+        if ($total -gt 0) {
+          $pct = [math]::Min(100, [int](($readTotal * 100) / $total))
+          Write-Progress -Activity "Downloading $App" -Status ("{0:N1} MB / {1:N1} MB" -f ($readTotal/1MB), ($total/1MB)) -PercentComplete $pct
+        } else {
+          Write-Progress -Activity "Downloading $App" -Status ("{0:N1} MB" -f ($readTotal/1MB)) -PercentComplete -1
+        }
+      }
+      $fs.Close()
+      $stream.Close()
+      $resp.Close()
+      Write-Progress -Activity "Downloading $App" -Completed
+    } catch {
+      Write-Progress -Activity "Downloading $App" -Completed
+      Write-Host "  · interrupted ($($_.Exception.Message)) — resume try $try..." -ForegroundColor DarkYellow
+      Start-Sleep -Seconds 1
+      continue
+    }
+    $got = (Get-Item $dest).Length
+    if ($expectedSize -gt 0) {
+      if ($got -eq $expectedSize) { break }
+      Write-Host "  · partial ($got / $expectedSize) — resume try $try..." -ForegroundColor DarkYellow
+      Start-Sleep -Seconds 1
+      continue
+    }
+    if ($got -gt 0) { break }
+  }
 
   Write-Host "  ⚙ verifying SHA256" -ForegroundColor Cyan
   $actual = (Get-FileHash -Path $dest -Algorithm SHA256).Hash.ToLowerInvariant()

@@ -47,6 +47,7 @@ print("|".join([
     mac.get("version", ""),
     mac.get("sha256", ""),
     mac.get("args") or "",
+    str(int(mac.get("size") or 0)),
 ]))
 ' "$APP")"
   RC=$?
@@ -66,14 +67,55 @@ print("|".join([
     exit 1
   fi
 
-  local URL VERSION EXPECTED ARGS EXT DEST ACTUAL
-  IFS='|' read -r URL VERSION EXPECTED ARGS <<<"$PARSED"
+  local URL VERSION EXPECTED ARGS EXPECTED_SIZE EXT DEST ACTUAL GOT
+  IFS='|' read -r URL VERSION EXPECTED ARGS EXPECTED_SIZE <<<"$PARSED"
   EXPECTED="$(printf '%s' "$EXPECTED" | tr '[:upper:]' '[:lower:]')"
+  EXPECTED_SIZE="${EXPECTED_SIZE:-0}"
+  # Force https for our store host (manifest may still emit http behind proxy)
+  case "$URL" in
+    http://appstore.fvcloud.online/*) URL="https://${URL#http://}" ;;
+  esac
   EXT="${URL##*.}"
   DEST="/tmp/${APP}-${VERSION}.${EXT}"
 
   echo "  [*] Downloading $APP $VERSION..."
-  curl -fsSL# -o "$DEST" "$URL"
+  if [[ "$EXPECTED_SIZE" =~ ^[1-9][0-9]*$ ]]; then
+    echo "  · expected size: $EXPECTED_SIZE bytes"
+  fi
+  # Real progress bar (-#). No -s (silent kills the bar).
+  # Cloudflare / proxies often cut big files — resume with -C - until size matches.
+  rm -f "$DEST"
+  local try=0
+  while true; do
+    try=$((try + 1))
+    if (( try > 40 )); then
+      echo "  [!] Download incomplete after $try tries." >&2
+      rm -f "$DEST"
+      exit 1
+    fi
+    set +e
+    curl -fL --retry 2 --retry-delay 2 -C - --progress-bar -o "$DEST" "$URL"
+    local curl_rc=$?
+    set -e
+    GOT="$(wc -c <"$DEST" | tr -d '[:space:]')"
+    if [[ "$EXPECTED_SIZE" =~ ^[1-9][0-9]*$ ]]; then
+      if [[ "$GOT" == "$EXPECTED_SIZE" ]]; then
+        echo
+        break
+      fi
+      echo
+      echo "  [*] Partial ($GOT / $EXPECTED_SIZE) — resume try $try..."
+      sleep 1
+      continue
+    fi
+    if [[ $curl_rc -eq 0 && "$GOT" -gt 0 ]]; then
+      echo
+      break
+    fi
+    echo
+    echo "  [*] Download interrupted (got $GOT bytes) — retry $try..."
+    sleep 1
+  done
 
   echo "  [*] Verifying SHA256..."
   ACTUAL="$(shasum -a 256 "$DEST" | awk '{print tolower($1)}')"

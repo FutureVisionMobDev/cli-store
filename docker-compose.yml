@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     environment:
       PORT: "3000"
+      # Manifest URLs must be https or large downloads break behind proxies
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
       ADMIN_USER: admin
       ADMIN_PASS: "changeme"
     volumes:

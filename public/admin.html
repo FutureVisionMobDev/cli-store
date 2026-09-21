@@ -6,87 +6,234 @@
   <title>JKSTORE Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg0: #0b1220;
-      --bg1: #121a2b;
-      --panel: #162033;
-      --line: #2a3a55;
-      --text: #e8eef8;
-      --muted: #8b9bb8;
-      --cyan: #3de0c5;
-      --cyan-dim: #1fa894;
-      --amber: #f0b429;
-      --danger: #ff6b7a;
-      --ok: #5ddea0;
-      --font: "IBM Plex Sans", system-ui, sans-serif;
-      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --bg: #f2f2f7;
+      --surface: #ffffff;
+      --ink: #1c1c1e;
+      --secondary: #3a3a3c;
+      --muted: #8e8e93;
+      --line: #d1d1d6;
+      --blue: #0071e3;
+      --blue-soft: #e8f1fc;
+      --ok: #248a3d;
+      --ok-soft: #e3f6e8;
+      --amber: #9a6700;
+      --amber-soft: #fff6e0;
+      --danger: #d70015;
+      --danger-soft: #ffe5e8;
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: var(--font);
-      color: var(--text);
-      background:
-        radial-gradient(1200px 600px at 10% -10%, rgba(61, 224, 197, 0.12), transparent 55%),
-        radial-gradient(900px 500px at 100% 0%, rgba(240, 180, 41, 0.08), transparent 50%),
-        linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #0e1626);
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 48px 20px 80px; }
-    .ascii {
-      font-family: var(--mono);
-      font-size: clamp(0.55rem, 1.6vw, 0.85rem);
-      line-height: 1.15;
-      color: var(--cyan);
-      white-space: pre;
-      margin: 0 0 8px;
-      text-shadow: 0 0 24px rgba(61, 224, 197, 0.25);
+
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: saturate(180%) blur(16px);
+      background: rgba(242, 242, 247, 0.88);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
     }
-    .tag {
+    .top-inner {
+      width: 100%;
+      max-width: none;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.03em;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .logo em { font-style: normal; color: var(--blue); }
+    .logo span {
+      margin-left: 8px;
+      font-size: 0.72rem;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--muted);
-      font-family: var(--mono);
+      vertical-align: middle;
+    }
+    .top-actions { display: flex; gap: 4px; align-items: center; }
+    .top-actions a {
+      text-decoration: none;
+      color: var(--blue);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    .top-actions a.muted { color: var(--muted); font-weight: 500; }
+    .top-actions a:hover { background: rgba(0,0,0,0.04); }
+
+    .page {
+      width: 100%;
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+    @media (min-width: 1100px) {
+      .page {
+        grid-template-columns: minmax(380px, 440px) minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 22px 22px 20px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    }
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .panel .sub {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .modes {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      border: 0;
+      background: transparent;
+      color: var(--secondary);
+      font-family: var(--font);
       font-size: 0.85rem;
-      margin-bottom: 36px;
+      font-weight: 650;
+      padding: 8px 14px;
+      border-radius: 980px;
+      cursor: pointer;
     }
-    .tag a { color: var(--cyan); text-decoration: none; }
-    .card {
-      background: rgba(22, 32, 51, 0.88);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 22px;
-      margin-bottom: 18px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    .mode-btn.active {
+      background: var(--ink);
+      color: #fff;
     }
-    .card h2 { margin: 0 0 6px; font-size: 1.05rem; }
-    .card p.sub { margin: 0 0 16px; color: var(--muted); font-size: 0.92rem; }
+    .mode-btn:hover:not(.active) { background: rgba(0,0,0,0.05); }
+
+    .hint {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+    .hint.ready {
+      background: var(--ok-soft);
+      color: var(--ok);
+    }
+
     label {
       display: block;
       font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
       color: var(--muted);
       margin-bottom: 6px;
-      font-family: var(--mono);
     }
     input, select {
       width: 100%;
-      background: #0d1524;
+      background: #fafafa;
       border: 1px solid var(--line);
       border-radius: 10px;
-      color: var(--text);
+      color: var(--ink);
       padding: 11px 12px;
       font: 500 0.95rem var(--font);
       outline: none;
     }
     input:focus, select:focus {
-      border-color: var(--cyan-dim);
-      box-shadow: 0 0 0 3px rgba(61, 224, 197, 0.15);
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+      background: #fff;
     }
     .row { display: grid; gap: 12px; margin-bottom: 12px; }
-    @media (min-width: 560px) {
+    @media (min-width: 520px) {
       .row.cols-2 { grid-template-columns: 1fr 1fr; }
+    }
+
+    .drop {
+      border: 1.5px dashed var(--line);
+      border-radius: 14px;
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      background: #fafafa;
+      margin: 4px 0 14px;
+      transition: border-color 0.12s, background 0.12s, color 0.12s;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+    .drop.hot, .drop.has-file {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+    .drop .fname {
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--ink);
+      word-break: break-all;
+    }
+
+    .progress-wrap { margin: 0 0 14px; }
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #ebebef;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--blue);
+      transition: width 0.15s ease;
+    }
+    .progress-label {
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 4px;
     }
     .btn {
       display: inline-flex;
@@ -95,176 +242,217 @@
       border: none;
       border-radius: 10px;
       padding: 11px 18px;
-      font: 600 0.95rem var(--font);
+      font: 650 0.92rem var(--font);
       cursor: pointer;
-      background: var(--cyan);
-      color: #04201b;
+      background: var(--blue);
+      color: #fff;
     }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn:hover:not(:disabled) { background: #63ecd5; }
-    .btn-danger { background: transparent; color: var(--danger); border: none; font-size: 0.85rem; padding: 4px 0; cursor: pointer; }
-    .drop {
-      border: 1.5px dashed #3a4f73;
-      border-radius: 12px;
-      padding: 32px 16px;
-      text-align: center;
-      color: var(--muted);
+    .btn:hover:not(:disabled) { background: #0077ed; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: none;
+      font: 600 0.82rem var(--font);
+      padding: 4px 0;
       cursor: pointer;
-      background: #0d1524;
-      margin: 8px 0 14px;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
-    .drop.hot, .drop.has-file {
-      border-color: var(--cyan);
-      background: rgba(61, 224, 197, 0.08);
-      color: var(--cyan);
-    }
-    .drop .fname {
-      margin-top: 10px;
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--text);
-      word-break: break-all;
-    }
-    .hint {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      color: var(--amber);
-      margin: 0 0 12px;
-    }
-    .status { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+    .btn-danger:hover { text-decoration: underline; }
+
+    .status { font-size: 0.88rem; color: var(--muted); font-weight: 500; }
     .status.ok { color: var(--ok); }
     .status.err { color: var(--danger); }
+
+    .catalog-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .catalog-head h2 { margin: 0; }
+    .count {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    #appList { display: grid; gap: 12px; }
     .app-card {
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      background: #101a2c;
-      margin-bottom: 12px;
+      border-radius: 14px;
+      padding: 16px 16px 14px;
+      background: #fff;
     }
-    .app-card h3 { margin: 0; font-size: 1.05rem; }
-    .app-card .slug { font-family: var(--mono); font-size: 0.8rem; color: var(--cyan); margin-left: 6px; }
-    .app-card .desc { color: var(--muted); font-size: 0.9rem; margin: 6px 0 12px; }
+    .app-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .app-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .app-card .slug {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--blue);
+      margin-left: 8px;
+      font-weight: 500;
+    }
+    .app-card .desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin: 4px 0 10px;
+    }
     .ver {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      padding: 8px 0;
-      border-top: 1px solid #1e2c44;
-      font-size: 0.9rem;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      font-size: 0.88rem;
+    }
+    .ver-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+      color: var(--secondary);
+    }
+    .ver-meta .file {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      word-break: break-all;
     }
     .badge {
       display: inline-block;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: #1a2b44;
-      color: var(--amber);
-      margin-right: 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f2f2f7;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
-    .empty { color: var(--muted); font-family: var(--mono); font-size: 0.9rem; }
-    .cli {
-      font-family: var(--mono);
-      font-size: 0.82rem;
-      background: #0a1220;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: #b8f5e8;
-      overflow-x: auto;
-      margin: 8px 0 0;
+    .badge.os-mac { background: #e8f1fc; color: #0071e3; }
+    .badge.os-win { background: #e8f8ef; color: #248a3d; }
+    .badge.remote { background: var(--amber-soft); color: var(--amber); }
+
+    .cli-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 6px;
     }
     .cli-row {
       display: flex;
       gap: 8px;
       align-items: stretch;
-      margin-top: 8px;
+      margin-bottom: 6px;
     }
-    .cli-row .cli {
+    .cli {
       flex: 1;
       margin: 0;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.4;
+      background: #fafafa;
+      border: 1px solid var(--line);
+      border-radius: 10px;
       padding: 10px 12px;
-      font-size: 0.75rem;
-      line-height: 1.35;
+      color: var(--ink);
+      overflow-x: auto;
       word-break: break-all;
+      white-space: pre-wrap;
     }
     .cli-row button.copy {
       flex-shrink: 0;
       border: 1px solid var(--line);
-      background: #162033;
-      color: var(--cyan);
-      border-radius: 8px;
+      background: #fff;
+      color: var(--blue);
+      border-radius: 10px;
       padding: 0 12px;
-      font-family: var(--mono);
-      font-size: 0.72rem;
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 650;
       cursor: pointer;
     }
-    .cli-row button.copy:hover { border-color: var(--cyan); }
-    .cli-label {
+    .cli-row button.copy:hover { background: var(--blue-soft); }
+
+    .empty {
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding: 28px 8px;
+      text-align: center;
+    }
+
+    .cli-strip {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: grid;
+      gap: 8px;
+    }
+    @media (min-width: 800px) {
+      .cli-strip {
+        grid-template-columns: auto 1fr 1fr;
+        align-items: center;
+      }
+    }
+    .cli-strip h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .cli-strip .cli { margin: 0; }
+    .note {
+      margin: 8px 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .note code {
       font-family: var(--mono);
-      font-size: 0.68rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 12px 0 0;
-    }
-    .progress-wrap { margin: 0 0 14px; }
-    .progress-bar {
-      height: 10px;
-      border-radius: 999px;
-      background: #0d1524;
-      border: 1px solid var(--line);
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #1fa894, var(--cyan));
-      transition: width 0.15s ease;
-    }
-    .progress-label {
-      margin-top: 6px;
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    .mode-btn {
-      background: #0d1524;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 8px 14px;
-      font: 600 0.85rem var(--font);
-      cursor: pointer;
-    }
-    .mode-btn.active {
-      background: rgba(61, 224, 197, 0.15);
-      border-color: var(--cyan);
-      color: var(--cyan);
+      font-size: 0.78rem;
+      color: var(--blue);
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <pre class="ascii">       _ _  ______ _____ ___  ____  _____ 
-     | | |/ / ___|_   _/ _ \|  _ \| ____|
-  _  | | ' /\___ \ | || | | | |_) |  _|  
- | |_| | . \ ___) || || |_| |  _ <| |___ 
-  \___/|_|\_\____/ |_| \___/|_| \_\_____|</pre>
-    <div class="tag">admin · upload to this server <b>or</b> link a GitHub/release URL · <a href="/">public page</a></div>
+  <header class="top">
+    <div class="top-inner">
+      <a class="logo" href="/admin">JK<em>STORE</em><span>Admin</span></a>
+      <nav class="top-actions">
+        <a class="muted" href="/apps.json">JSON</a>
+        <a href="/">Store</a>
+      </nav>
+    </div>
+  </header>
 
-    <section class="card">
-      <h2>Publish app</h2>
-      <p class="sub">Self-host a file on JKSTORE, or point at an external installer (GitHub Releases, CDN, etc.). Zip packages auto-extract + launch the main exe/app (optional path in Silent args).</p>
+  <main class="page">
+    <section class="panel">
+      <h2>Publish</h2>
+      <p class="sub">Upload an installer to this server, or link a GitHub / CDN URL.</p>
 
-      <div class="mode-row" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button type="button" class="mode-btn active" id="modeUpload" data-mode="upload">Upload to server</button>
+      <div class="modes">
+        <button type="button" class="mode-btn active" id="modeUpload" data-mode="upload">Upload</button>
         <button type="button" class="mode-btn" id="modeRemote" data-mode="remote">External link</button>
       </div>
 
-      <p class="hint" id="fileHint">▸ Drop or choose an installer before publishing</p>
+      <p class="hint" id="fileHint">Drop or choose an installer before publishing</p>
+
       <div class="row cols-2">
         <div>
           <label for="pubSlug">Slug</label>
@@ -288,7 +476,7 @@
         </div>
         <div>
           <label for="pubArgs">Silent args / zip launch path</label>
-          <input id="pubArgs" placeholder="/S  or  App/Foo.exe (zip)" />
+          <input id="pubArgs" placeholder="/S  or  App/Foo.exe" />
         </div>
         <div>
           <label for="pubDesc">Description</label>
@@ -301,7 +489,7 @@
           Drop installer / zip here — or click to browse
           <div id="fileName" class="fname"></div>
         </div>
-        <input id="fileInput" type="file" accept=".exe,.msi,.pkg,.dmg,.zip,application/octet-stream,application/zip" hidden />
+        <input id="fileInput" type="file" accept=".exe,.msi,.pkg,.dmg,.zip,.rar,application/octet-stream,application/zip" hidden />
         <div class="progress-wrap" id="progressWrap" hidden>
           <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
           <div class="progress-label" id="progressLabel">0%</div>
@@ -318,39 +506,40 @@
         <div class="row cols-2">
           <div>
             <label for="pubSha">SHA256 (required)</label>
-            <input id="pubSha" placeholder="abcdef0123… (64 hex chars)" spellcheck="false" />
+            <input id="pubSha" placeholder="64 hex chars" spellcheck="false" />
           </div>
           <div>
             <label for="pubSize">Size bytes (optional)</label>
             <input id="pubSize" placeholder="123456789" />
           </div>
         </div>
-        <p class="sub" style="margin-top:0">CLI still verifies SHA256 before install. Get hash from release notes, or: <code style="color:var(--cyan)">Get-FileHash file.exe -Algorithm SHA256</code></p>
+        <p class="note">CLI verifies SHA256 before install. Example: <code>Get-FileHash file.exe -Algorithm SHA256</code></p>
       </div>
 
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div class="actions">
         <button type="button" id="publishBtn" class="btn" disabled>Publish</button>
         <span id="uploadStatus" class="status"></span>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Catalog</h2>
-      <p class="sub">Apps with a local upload or external link show here and in the CLI menu.</p>
-      <div id="appList"></div>
+    <section class="panel">
+      <div class="catalog-head">
+        <h2>Catalog</h2>
+        <span class="count" id="catalogCount"></span>
+      </div>
+      <div id="appList"><p class="empty">Loading…</p></div>
     </section>
 
-    <section class="card">
+    <section class="cli-strip">
       <h2>CLI</h2>
-      <p class="sub">Simple one-liners (menu opens automatically):</p>
-      <div class="cli">irm https://appstore.fvcloud.online | iex</div>
-      <div class="cli">curl -fsSL https://appstore.fvcloud.online | bash</div>
+      <pre class="cli">irm https://appstore.fvcloud.online | iex</pre>
+      <pre class="cli">curl -fsSL https://appstore.fvcloud.online | bash</pre>
     </section>
-  </div>
+  </main>
 
   <script>
     let selectedFile = null;
-    let publishMode = "upload"; // upload | remote
+    let publishMode = "upload";
 
     async function api(path, options = {}) {
       const res = await fetch(path, options);
@@ -387,18 +576,18 @@
       if (publishMode === "upload") {
         ready = !!selectedFile;
         hint.textContent = ready
-          ? "▸ Installer ready — fill slug, name, version, then Publish"
-          : "▸ Drop or choose an installer before publishing";
+          ? "Installer ready — fill slug, name, version, then Publish"
+          : "Drop or choose an installer before publishing";
       } else {
         const url = document.getElementById("pubUrl").value.trim();
         const sha = document.getElementById("pubSha").value.trim();
         ready = !!url && !!sha;
         hint.textContent = ready
-          ? "▸ Link + SHA256 ready — fill slug, name, version, then Publish"
-          : "▸ Paste a direct download URL and SHA256 (GitHub release asset URL works)";
+          ? "Link + SHA256 ready — fill slug, name, version, then Publish"
+          : "Paste a direct download URL and SHA256";
       }
       btn.disabled = !ready;
-      hint.style.color = ready ? "var(--ok)" : "var(--amber)";
+      hint.classList.toggle("ready", ready);
     }
 
     function setProgress(pct, label) {
@@ -468,9 +657,14 @@
         .map((a) => `<option value="${escapeHtml(a.slug)}">${escapeHtml(a.name)}</option>`)
         .join("");
 
+      const countEl = document.getElementById("catalogCount");
+      countEl.textContent = withFiles.length
+        ? withFiles.length + " app" + (withFiles.length === 1 ? "" : "s")
+        : "";
+
       const list = document.getElementById("appList");
       if (!withFiles.length) {
-        list.innerHTML = `<p class="empty">No published apps yet. Upload an installer above.</p>`;
+        list.innerHTML = `<p class="empty">No published apps yet. Upload an installer on the left.</p>`;
         return;
       }
       list.innerHTML = withFiles.map((a) => {
@@ -484,31 +678,38 @@
           cmds.push(`<div class="cli-label">Mac — direct install</div>
             <div class="cli-row">
               <pre class="cli">${escapeHtml(macCmd)}</pre>
-              <button type="button" class="copy" data-copy="${escapeHtml(macCmd)}">copy</button>
+              <button type="button" class="copy" data-copy="${escapeHtml(macCmd)}">Copy</button>
             </div>`);
         }
         if (hasWin) {
           cmds.push(`<div class="cli-label">Windows — direct install</div>
             <div class="cli-row">
               <pre class="cli">${escapeHtml(winCmd)}</pre>
-              <button type="button" class="copy" data-copy="${escapeHtml(winCmd)}">copy</button>
+              <button type="button" class="copy" data-copy="${escapeHtml(winCmd)}">Copy</button>
             </div>`);
         }
         return `
         <div class="app-card">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+          <div class="app-card-top">
             <div>
               <h3>${escapeHtml(a.name)}<span class="slug">${escapeHtml(a.slug)}</span></h3>
-              <div class="desc">${escapeHtml(a.description || "—")}</div>
+              <div class="desc">${escapeHtml(a.description || "No description")}</div>
             </div>
-            <button type="button" class="btn-danger" data-delete-app="${escapeHtml(a.slug)}">delete app</button>
+            <button type="button" class="btn-danger" data-delete-app="${escapeHtml(a.slug)}">Delete app</button>
           </div>
           ${(a.versions || []).map((v) => {
             const remote = !!(v.source_url);
+            const osClass = v.os === "mac" ? "os-mac" : "os-win";
             return `
             <div class="ver">
-              <span><span class="badge">${escapeHtml(v.os)}</span>${remote ? '<span class="badge" style="border-color:var(--amber);color:var(--amber)">remote</span>' : ''}<span class="badge">v${escapeHtml(v.version)}</span> ${formatMb(v.size)} · ${escapeHtml(remote ? (v.source_url || v.filename) : v.filename)}</span>
-              <button type="button" class="btn-danger" data-delete-version="${v.id}">remove</button>
+              <div class="ver-meta">
+                <span class="badge ${osClass}">${escapeHtml(v.os)}</span>
+                ${remote ? '<span class="badge remote">remote</span>' : ""}
+                <span class="badge">v${escapeHtml(v.version)}</span>
+                <span>${formatMb(v.size)}</span>
+                <span class="file">${escapeHtml(remote ? (v.source_url || v.filename) : v.filename)}</span>
+              </div>
+              <button type="button" class="btn-danger" data-delete-version="${v.id}">Remove</button>
             </div>`;
           }).join("")}
           ${cmds.join("")}
@@ -600,12 +801,12 @@
         }
 
         status.className = "status ok";
-        status.textContent = "✓ Published";
+        status.textContent = "Published";
         document.getElementById("pubVersion").value = "";
         await loadApps();
       } catch (err) {
         status.className = "status err";
-        status.textContent = "✗ " + err.message;
+        status.textContent = err.message;
         hideProgress();
       } finally {
         syncPublishEnabled();
@@ -619,10 +820,10 @@
         try {
           await navigator.clipboard.writeText(text);
           const prev = copyBtn.textContent;
-          copyBtn.textContent = "copied";
+          copyBtn.textContent = "Copied";
           setTimeout(() => { copyBtn.textContent = prev; }, 1200);
         } catch {
-          copyBtn.textContent = "fail";
+          copyBtn.textContent = "Fail";
         }
         return;
       }
@@ -643,7 +844,6 @@
       }
     });
 
-    // Prefill name when picking existing slug from datalist blur
     document.getElementById("pubSlug").addEventListener("change", async () => {
       try {
         const apps = await api("/admin/api/apps");

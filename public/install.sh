@@ -132,20 +132,109 @@ print("|".join([
       sudo installer -pkg "$DEST" -target / $ARGS
       ;;
     dmg)
-      local MOUNT APP_BUNDLE
-      MOUNT="$(hdiutil attach "$DEST" -nobrowse | awk 'END {print $NF}')"
-      APP_BUNDLE="$(find "$MOUNT" -maxdepth 2 -name '*.app' -type d | head -n 1 || true)"
-      if [[ -z "$APP_BUNDLE" ]]; then
-        hdiutil detach "$MOUNT" >/dev/null || true
+      # Support: drag-drop .app DMG, flat .pkg DMG, or nested Setup.dmg → .pkg
+      # (e.g. Adobe Acrobat pack: outer DMG → Setup.dmg → Acrobat … Installer.pkg + Patch.pkg)
+      local -a DMG_MOUNTS=()
+      detach_dmg_mounts() {
+        local m
+        if ((${#DMG_MOUNTS[@]})); then
+          for m in "${DMG_MOUNTS[@]}"; do
+            hdiutil detach "$m" >/dev/null 2>&1 || true
+          done
+        fi
+        DMG_MOUNTS=()
+      }
+      mount_dmg() {
+        local path="$1" m
+        m="$(hdiutil attach "$path" -nobrowse | awk 'END {print $NF}')"
+        if [[ -z "$m" || ! -d "$m" ]]; then
+          echo "  [!] Failed to mount $(basename "$path")" >&2
+          return 1
+        fi
+        DMG_MOUNTS+=("$m")
+        printf '%s\n' "$m"
+      }
+      install_pkgs_in_volume() {
+        local vol="$1"
+        local -a pkgs=() patches=() mains=()
+        local p
+        while IFS= read -r p; do
+          [[ -n "$p" ]] || continue
+          pkgs+=("$p")
+        done < <(find "$vol" -maxdepth 5 -name '*.pkg' -type f 2>/dev/null | sort)
+        ((${#pkgs[@]})) || return 1
+        for p in "${pkgs[@]}"; do
+          case "$(basename "$p")" in
+            [Pp]atch*) patches+=("$p") ;;
+            *) mains+=("$p") ;;
+          esac
+        done
+        if ((${#mains[@]})); then
+          for p in "${mains[@]}"; do
+            echo "  [*] Installing package: $(basename "$p")"
+            # shellcheck disable=SC2086
+            sudo installer -pkg "$p" -target / $ARGS
+          done
+        fi
+        if ((${#patches[@]})); then
+          for p in "${patches[@]}"; do
+            echo "  [*] Applying patch: $(basename "$p")"
+            # shellcheck disable=SC2086
+            sudo installer -pkg "$p" -target / $ARGS
+          done
+        fi
+        return 0
+      }
+      try_dmg_volume() {
+        local vol="$1"
+        local depth="${2:-0}"
+        local APP_BUNDLE nested inner
+
+        APP_BUNDLE="$(find "$vol" -maxdepth 3 -name '*.app' -type d 2>/dev/null | head -n 1 || true)"
+        if [[ -n "$APP_BUNDLE" ]]; then
+          echo "  [*] Copying $(basename "$APP_BUNDLE") → /Applications"
+          sudo cp -R "$APP_BUNDLE" /Applications/
+          open -a "/Applications/$(basename "$APP_BUNDLE")" 2>/dev/null || true
+          return 0
+        fi
+
+        # Nested installer DMG (Setup.dmg) before outer Patch.pkg alone
+        if (( depth < 2 )); then
+          nested="$(find "$vol" -maxdepth 3 -name '*.dmg' -type f 2>/dev/null | head -n 1 || true)"
+          if [[ -n "$nested" ]]; then
+            echo "  [*] Opening nested DMG: $(basename "$nested")"
+            inner="$(mount_dmg "$nested")" || return 1
+            if try_dmg_volume "$inner" $((depth + 1)); then
+              # Outer Patch.pkg often sits beside Setup.dmg
+              install_pkgs_in_volume "$vol" || true
+              return 0
+            fi
+          fi
+        fi
+
+        if install_pkgs_in_volume "$vol"; then
+          return 0
+        fi
+        return 1
+      }
+
+      trap detach_dmg_mounts EXIT
+      local OUTER
+      echo "  [*] Mounting DMG..."
+      OUTER="$(mount_dmg "$DEST")" || {
+        trap - EXIT
         rm -f "$DEST"
-        echo "  [!] No .app found inside DMG." >&2
+        exit 1
+      }
+      if ! try_dmg_volume "$OUTER" 0; then
+        detach_dmg_mounts
+        trap - EXIT
+        rm -f "$DEST"
+        echo "  [!] No .app / .pkg / nested installer found in DMG." >&2
         exit 1
       fi
-      sudo cp -R "$APP_BUNDLE" /Applications/
-      hdiutil detach "$MOUNT" >/dev/null || true
-      local APP_NAME
-      APP_NAME="$(basename "$APP_BUNDLE")"
-      open -a "/Applications/$APP_NAME" 2>/dev/null || true
+      detach_dmg_mounts
+      trap - EXIT
       ;;
     zip)
       local EXTRACT_ROOT LAUNCH

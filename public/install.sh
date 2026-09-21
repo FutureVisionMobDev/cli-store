@@ -145,14 +145,23 @@ print("|".join([
         DMG_MOUNTS=()
       }
       mount_dmg() {
-        local path="$1" m
-        m="$(hdiutil attach "$path" -nobrowse | awk 'END {print $NF}')"
-        if [[ -z "$m" || ! -d "$m" ]]; then
+        local path="$1" mp out
+        # Fixed mountpoint — volume names with spaces break "awk NF" parsing of hdiutil output
+        mp="/tmp/jkstore-mnt-$$-${#DMG_MOUNTS[@]}"
+        mkdir -p "$mp"
+        if ! out="$(hdiutil attach "$path" -nobrowse -owners on -mountpoint "$mp" 2>&1)"; then
           echo "  [!] Failed to mount $(basename "$path")" >&2
+          printf '%s\n' "$out" >&2
+          rmdir "$mp" 2>/dev/null || true
           return 1
         fi
-        DMG_MOUNTS+=("$m")
-        printf '%s\n' "$m"
+        if [[ ! -d "$mp" ]]; then
+          echo "  [!] Mountpoint missing after attach: $mp" >&2
+          printf '%s\n' "$out" >&2
+          return 1
+        fi
+        DMG_MOUNTS+=("$mp")
+        printf '%s\n' "$mp"
       }
       install_pkgs_in_volume() {
         local vol="$1"
@@ -203,12 +212,20 @@ print("|".join([
           nested="$(find "$vol" -maxdepth 3 -name '*.dmg' -type f 2>/dev/null | head -n 1 || true)"
           if [[ -n "$nested" ]]; then
             echo "  [*] Opening nested DMG: $(basename "$nested")"
-            inner="$(mount_dmg "$nested")" || return 1
+            # Copy off the outer volume — attach-from-mounted-DMG often fails on macOS
+            local nested_copy="/tmp/jkstore-nested-$$.dmg"
+            cp -f "$nested" "$nested_copy"
+            inner="$(mount_dmg "$nested_copy")" || {
+              rm -f "$nested_copy"
+              return 1
+            }
             if try_dmg_volume "$inner" $((depth + 1)); then
               # Outer Patch.pkg often sits beside Setup.dmg
               install_pkgs_in_volume "$vol" || true
+              rm -f "$nested_copy"
               return 0
             fi
+            rm -f "$nested_copy"
           fi
         fi
 

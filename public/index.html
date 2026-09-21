@@ -6,100 +6,476 @@
   <title>JKSTORE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Sora:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --cyan: #3de0c5;
-      --text: #e8eef8;
-      --muted: #8b9bb8;
-      --line: #2a3a55;
-      --font: "IBM Plex Sans", system-ui, sans-serif;
+      --ink: #12151a;
+      --muted: #5c6570;
+      --line: #e4e7eb;
+      --paper: #f7f6f3;
+      --surface: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #ccfbf1;
+      --font: "Sora", sans-serif;
+      --display: "Fraunces", Georgia, serif;
       --mono: "IBM Plex Mono", ui-monospace, monospace;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
       font-family: var(--font);
-      color: var(--text);
+      color: var(--ink);
       background:
-        radial-gradient(1000px 500px at 20% 0%, rgba(61, 224, 197, 0.14), transparent 55%),
-        radial-gradient(800px 400px at 90% 10%, rgba(240, 180, 41, 0.1), transparent 45%),
-        linear-gradient(165deg, #0b1220, #121a2b 50%, #0e1626);
-      padding: 32px 16px;
+        radial-gradient(900px 480px at 12% -8%, rgba(15, 118, 110, 0.10), transparent 55%),
+        radial-gradient(700px 420px at 100% 0%, rgba(180, 140, 90, 0.08), transparent 50%),
+        linear-gradient(180deg, #faf9f6 0%, var(--paper) 40%, #f0efeb 100%);
     }
-    .card {
-      width: min(560px, 100%);
-      background: rgba(22, 32, 51, 0.9);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 28px 26px 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    .wrap {
+      width: min(920px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 72px;
     }
-    .ascii {
-      font-family: var(--mono);
-      font-size: clamp(0.5rem, 2.2vw, 0.78rem);
-      line-height: 1.15;
-      color: var(--cyan);
-      white-space: pre;
-      margin: 0 0 10px;
-      text-shadow: 0 0 24px rgba(61, 224, 197, 0.28);
+
+    /* —— hero: one composition —— */
+    header.hero {
+      padding: clamp(48px, 12vh, 96px) 0 40px;
+      border-bottom: 1px solid var(--line);
     }
-    .sub { color: var(--muted); margin: 0 0 22px; font-size: 0.95rem; }
-    .cli {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      background: #0a1220;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: #b8f5e8;
-      margin: 0 0 10px;
-      overflow-x: auto;
+    .brand {
+      font-family: var(--display);
+      font-weight: 650;
+      font-size: clamp(2.6rem, 8vw, 4.4rem);
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      margin: 0 0 18px;
+      color: var(--ink);
     }
-    .label {
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .brand span {
+      color: var(--accent);
+    }
+    .tagline {
+      margin: 0 0 28px;
+      max-width: 34ch;
+      font-size: 1.05rem;
+      line-height: 1.5;
       color: var(--muted);
-      margin: 14px 0 6px;
+      font-weight: 400;
     }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
-    a.btn {
-      display: inline-flex;
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       align-items: center;
-      text-decoration: none;
-      border-radius: 10px;
-      padding: 10px 16px;
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font-family: var(--font);
       font-weight: 600;
       font-size: 0.92rem;
+      border-radius: 10px;
+      padding: 12px 18px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease;
     }
-    a.btn-primary { background: var(--cyan); color: #04201b; }
-    a.btn-ghost { border: 1px solid var(--line); color: var(--text); }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #2a3038; }
+    .btn-quiet {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+    .btn-quiet:hover { color: var(--ink); border-color: #c8ced6; }
+
+    /* —— install strip —— */
+    section.install {
+      padding: 36px 0 8px;
+    }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .install-grid {
+      display: grid;
+      gap: 12px;
+    }
+    @media (min-width: 720px) {
+      .install-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .cmd {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .cmd-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .cmd-os {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .cmd code {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: #1f2933;
+      word-break: break-all;
+      line-height: 1.45;
+    }
+    .copy {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 0;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 7px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .copy:hover { filter: brightness(0.97); }
+
+    /* —— catalog —— */
+    section.catalog {
+      padding: 40px 0 0;
+    }
+    .catalog-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+    .catalog-head h2 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 650;
+      font-size: 1.55rem;
+      letter-spacing: -0.02em;
+    }
+    .count {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 4px;
+      border-bottom: 1px solid var(--line);
+      animation: rise 420ms ease both;
+    }
+    .row:last-child { border-bottom: 0; }
+    .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background:
+        linear-gradient(145deg, var(--accent-soft), #fff),
+        var(--accent);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      font-family: var(--display);
+      font-weight: 650;
+      font-size: 1.15rem;
+    }
+    .meta { min-width: 0; }
+    .name {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .slug {
+      margin: 2px 0 0;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chip {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.6);
+    }
+    .get {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .get:hover { filter: brightness(0.97); }
+    .empty, .err {
+      padding: 28px 4px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .err { color: #b42318; }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--ink); text-decoration: none; font-weight: 500; }
+    footer a:hover { color: var(--accent); }
+
+    /* —— install drawer —— */
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0;
+      width: min(480px, calc(100vw - 32px));
+      background: var(--surface);
+      box-shadow: 0 24px 60px rgba(18, 21, 26, 0.18);
+    }
+    dialog::backdrop { background: rgba(18, 21, 26, 0.28); }
+    .dlg {
+      padding: 22px 22px 18px;
+    }
+    .dlg h3 {
+      margin: 0 0 6px;
+      font-family: var(--display);
+      font-size: 1.35rem;
+    }
+    .dlg p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .dlg .cmd { margin-bottom: 10px; }
+    .dlg-close {
+      margin-top: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .row { animation: none; }
+      .btn { transition: none; }
+    }
   </style>
 </head>
 <body>
-  <main class="card">
-    <pre class="ascii">       _ _  ______ _____ ___  ____  _____ 
-     | | |/ / ___|_   _/ _ \|  _ \| ____|
-  _  | | ' /\___ \ | || | | | |_) |  _|  
- | |_| | . \ ___) || || |_| |  _ <| |___ 
-  \___/|_|\_\____/ |_| \___/|_| \_\_____|</pre>
-    <p class="sub">Self-hosted app catalog. Install from the terminal, manage in admin.</p>
+  <div class="wrap">
+    <header class="hero">
+      <h1 class="brand">JK<span>STORE</span></h1>
+      <p class="tagline">Private app catalog. One command to install — Windows or Mac.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#catalog">Browse apps</a>
+        <a class="btn btn-quiet" href="/admin">Admin</a>
+      </div>
+    </header>
 
-    <div class="label">Windows PowerShell</div>
-    <div class="cli">irm https://appstore.fvcloud.online | iex</div>
+    <section class="install" aria-label="Install commands">
+      <p class="section-label">Get the CLI</p>
+      <div class="install-grid">
+        <div class="cmd">
+          <div class="cmd-top">
+            <span class="cmd-os">Windows</span>
+            <button class="copy" type="button" data-copy="irm https://appstore.fvcloud.online | iex">Copy</button>
+          </div>
+          <code>irm https://appstore.fvcloud.online | iex</code>
+        </div>
+        <div class="cmd">
+          <div class="cmd-top">
+            <span class="cmd-os">Mac / Linux</span>
+            <button class="copy" type="button" data-copy="curl -fsSL https://appstore.fvcloud.online | bash">Copy</button>
+          </div>
+          <code>curl -fsSL https://appstore.fvcloud.online | bash</code>
+        </div>
+      </div>
+    </section>
 
-    <div class="label">Mac / Linux</div>
-    <div class="cli">curl -fsSL https://appstore.fvcloud.online | bash</div>
+    <section class="catalog" id="catalog">
+      <div class="catalog-head">
+        <h2>Apps</h2>
+        <span class="count" id="count">Loading…</span>
+      </div>
+      <ul class="list" id="list"></ul>
+    </section>
 
-    <div class="actions">
-      <a class="btn btn-primary" href="/admin">Admin login</a>
-      <a class="btn btn-ghost" href="/apps.json">View catalog JSON</a>
+    <footer>
+      <span>Self-hosted · FV Cloud</span>
+      <a href="/apps.json">apps.json</a>
+    </footer>
+  </div>
+
+  <dialog id="dlg">
+    <div class="dlg">
+      <h3 id="dlg-title">Install</h3>
+      <p id="dlg-sub">Run in terminal after the CLI is set up — or use the one-liner.</p>
+      <div class="cmd" id="dlg-mac-wrap" hidden>
+        <div class="cmd-top">
+          <span class="cmd-os">Mac</span>
+          <button class="copy" type="button" id="dlg-mac-copy">Copy</button>
+        </div>
+        <code id="dlg-mac"></code>
+      </div>
+      <div class="cmd" id="dlg-win-wrap" hidden>
+        <div class="cmd-top">
+          <span class="cmd-os">Windows</span>
+          <button class="copy" type="button" id="dlg-win-copy">Copy</button>
+        </div>
+        <code id="dlg-win"></code>
+      </div>
+      <button class="btn btn-quiet dlg-close" type="button" id="dlg-close">Close</button>
     </div>
-  </main>
+  </dialog>
+
+  <script>
+    const STORE = location.origin;
+    const listEl = document.getElementById("list");
+    const countEl = document.getElementById("count");
+    const dlg = document.getElementById("dlg");
+
+    function initial(name) {
+      const t = (name || "?").trim();
+      return (t[0] || "?").toUpperCase();
+    }
+
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => { btn.textContent = prev; }, 1200);
+      }).catch(() => {
+        btn.textContent = "Fail";
+      });
+    }
+
+    document.querySelectorAll("[data-copy]").forEach((btn) => {
+      btn.addEventListener("click", () => copyText(btn.getAttribute("data-copy"), btn));
+    });
+
+    function openInstall(slug, name, hasMac, hasWin) {
+      document.getElementById("dlg-title").textContent = name;
+      document.getElementById("dlg-sub").textContent = "Direct install for " + slug;
+      const mac = `curl -fsSL ${STORE}/install.sh | bash -s -- ${slug}`;
+      const win = `$env:JK_APP='${slug}'; irm ${STORE}/install.ps1 | iex`;
+      const macWrap = document.getElementById("dlg-mac-wrap");
+      const winWrap = document.getElementById("dlg-win-wrap");
+      macWrap.hidden = !hasMac;
+      winWrap.hidden = !hasWin;
+      document.getElementById("dlg-mac").textContent = mac;
+      document.getElementById("dlg-win").textContent = win;
+      document.getElementById("dlg-mac-copy").onclick = (e) => copyText(mac, e.currentTarget);
+      document.getElementById("dlg-win-copy").onclick = (e) => copyText(win, e.currentTarget);
+      dlg.showModal();
+    }
+
+    document.getElementById("dlg-close").onclick = () => dlg.close();
+    dlg.addEventListener("click", (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+
+    fetch("/apps.json")
+      .then((r) => {
+        if (!r.ok) throw new Error("catalog unavailable");
+        return r.json();
+      })
+      .then((data) => {
+        const slugs = Object.keys(data || {}).sort();
+        countEl.textContent = slugs.length === 1 ? "1 app" : slugs.length + " apps";
+        if (!slugs.length) {
+          listEl.innerHTML = '<li class="empty">No apps yet. Publish one from Admin.</li>';
+          return;
+        }
+        listEl.innerHTML = "";
+        slugs.forEach((slug, i) => {
+          const entry = data[slug];
+          const name = entry.name || slug;
+          const hasMac = !!entry.mac;
+          const hasWin = !!entry.win;
+          const chips = [];
+          if (hasMac) chips.push("mac");
+          if (hasWin) chips.push("win");
+          if (entry.mac?.version) chips.push("v" + entry.mac.version);
+          else if (entry.win?.version) chips.push("v" + entry.win.version);
+
+          const li = document.createElement("li");
+          li.className = "row";
+          li.style.animationDelay = (i * 40) + "ms";
+          li.innerHTML =
+            '<div class="icon" aria-hidden="true">' + initial(name) + "</div>" +
+            '<div class="meta">' +
+              '<p class="name"></p>' +
+              '<p class="slug"></p>' +
+              '<div class="chips"></div>' +
+            "</div>" +
+            '<button type="button" class="get">Get</button>';
+          li.querySelector(".name").textContent = name;
+          li.querySelector(".slug").textContent = slug;
+          const chipBox = li.querySelector(".chips");
+          chips.forEach((c) => {
+            const s = document.createElement("span");
+            s.className = "chip";
+            s.textContent = c;
+            chipBox.appendChild(s);
+          });
+          li.querySelector(".get").addEventListener("click", () =>
+            openInstall(slug, name, hasMac, hasWin)
+          );
+          listEl.appendChild(li);
+        });
+      })
+      .catch((err) => {
+        countEl.textContent = "";
+        listEl.innerHTML = '<li class="err">' + (err.message || "Failed to load") + "</li>";
+      });
+  </script>
 </body>
 </html>
